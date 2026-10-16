@@ -1,0 +1,13 @@
+{
+  "manifest_schema": "allstars-mod/1",
+  "must_understand": ["loader-requirements/1", "load-order/1"],
+  "id": "addon-example",
+  "name": "Addon Example",
+  "version": "1.0.0",
+  "summary": "A synthetic mod that shows requirements, load order and loader needs. It does nothing in the game.",
+  "homepage": "https://example.com/addon-example",
+  "status": { "stage": "RESEARCH_INPUTS_AVAILABLE_NOT_IMPLEMENTED" },
+  "requires": [ { "id": "minimal-example", "versions": ">=1.0.0 <2.0.0", "reason": "builds on the minimal example" } ],
+  "load_order": { "after": [ "minimal-example" ] },
+  "loader": { "host_abi": 1, "capabilities": [ "plan-format-copy", "runtime-init-before-game-crt" ] }
+}

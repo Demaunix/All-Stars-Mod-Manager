@@ -1,0 +1,9 @@
+{
+  "manifest_schema": "allstars-mod/1",
+  "id": "minimal-example",
+  "name": "Minimal Example",
+  "version": "1.0.0",
+  "summary": "A synthetic mod that does nothing. It only shows the file layout of a mod package.",
+  "status": { "stage": "RESEARCH_INPUTS_AVAILABLE_NOT_IMPLEMENTED" },
+  "installable": true
+}

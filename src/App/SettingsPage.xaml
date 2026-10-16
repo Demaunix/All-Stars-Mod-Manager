@@ -1,0 +1,63 @@
+<UserControl x:Class="AllStarsModManager.App.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.AutomationId="SettingsPage" AutomationProperties.Name="Manager settings">
+    <!-- The former Settings window, now the second page of the main window (like the Settings tab in other mod managers). Same controls, same IDs. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
+        <StackPanel Margin="16,16,16,6" MaxWidth="940" HorizontalAlignment="Left">
+            <GroupBox Header="Game folder">
+                <StackPanel>
+                    <TextBlock Text="The folder that contains “Sonic &amp; SEGA All-Stars Racing.exe” and the mods folder. Looking for it only reads; nothing is started or changed." Style="{StaticResource MutedText}"/>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBox x:Name="GameBox" IsReadOnly="True" AutomationProperties.AutomationId="GameFolderBox" AutomationProperties.Name="Game folder" ToolTip="{Binding Text, ElementName=GameBox}"/>
+                        <Button Grid.Column="1" Content="Choose…" Click="Browse_Click" Margin="8,0,0,0" IsEnabled="{Binding NotBusy}" AutomationProperties.AutomationId="BrowseGameButton"/>
+                        <Button Grid.Column="2" Content="Find automatically" Click="Detect_Click" Margin="8,0,0,0" IsEnabled="{Binding NotBusy}" AutomationProperties.AutomationId="DetectGameButton"/>
+                    </Grid>
+                    <TextBlock x:Name="GameNote" Margin="0,10,0,0" Style="{StaticResource MutedText}" AutomationProperties.AutomationId="GameNote"/>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Older mod folders">
+                <StackPanel>
+                    <TextBlock Text="Link folders that hold mods you already have, for example older test packages. They are listed in the mod list as available; nothing is copied or installed until you switch a mod on. The manager never changes a linked folder." Style="{StaticResource MutedText}"/>
+                    <ListBox x:Name="LinkedList" Height="100" Margin="0,10,0,0" AutomationProperties.AutomationId="LinkedFolders" AutomationProperties.Name="Linked folders"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="Link a folder…" Click="AddLinked_Click" Margin="0,0,8,0" IsEnabled="{Binding NotBusy}" AutomationProperties.AutomationId="AddLinkedButton"/>
+                        <Button Content="Unlink selected" Click="RemoveLinked_Click" IsEnabled="{Binding NotBusy}" AutomationProperties.AutomationId="RemoveLinkedButton"/>
+                    </StackPanel>
+                    <StackPanel x:Name="SuggestPanel" Visibility="Collapsed">
+                        <TextBlock Text="Found next to your game (not linked yet):" Margin="0,14,0,4" FontWeight="SemiBold"/>
+                        <ItemsControl x:Name="SuggestList" IsTabStop="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding}"/>
+                                        <Button Grid.Column="1" Content="Link" Tag="{Binding}" Click="LinkSuggestion_Click" Margin="8,0,0,0" MinHeight="28" Padding="10,3" IsEnabled="{Binding DataContext.NotBusy, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Display">
+                <CheckBox x:Name="TechBox" Content="Show technical details (hashes, raw status text) in the Files tab" Checked="Tech_Changed" Unchecked="Tech_Changed" IsEnabled="{Binding NotBusy}" AutomationProperties.AutomationId="TechnicalCheck"/>
+            </GroupBox>
+
+            <GroupBox Header="The manager's own files">
+                <StackPanel>
+                    <TextBlock x:Name="DataText" TextWrapping="Wrap" FontFamily="{StaticResource MonoFont}" AutomationProperties.AutomationId="DataText"/>
+                    <TextBlock Text="Settings, profiles and your mod library live here, next to the program. Backups and the record of changes live in the game's mods\.allstars-manager folder, so a change can always be undone." Style="{StaticResource MutedText}" Margin="0,6,0,0"/>
+                    <Button Content="Open this folder" Click="OpenData_Click" HorizontalAlignment="Left" Margin="0,10,0,0" AutomationProperties.AutomationId="OpenDataButton"/>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="About">
+                <TextBlock x:Name="AboutText" TextWrapping="Wrap" AutomationProperties.AutomationId="AboutText"/>
+            </GroupBox>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

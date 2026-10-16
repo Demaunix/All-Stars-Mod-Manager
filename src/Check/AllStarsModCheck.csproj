@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>AllStarsModManager.Check</RootNamespace>
+    <AssemblyName>AllStarsModCheck</AssemblyName>
+    <Description>Offline compatibility checker for Sonic &amp; SEGA All-Stars Racing loader mods</Description>
+    <SourceHash Condition="'$(SourceHash)' == ''">unbound-dev-build</SourceHash>
+    <InformationalVersion>$(Version)+$(SourceHash)</InformationalVersion>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\AllStarsModManager.Core.csproj" />
+  </ItemGroup>
+</Project>

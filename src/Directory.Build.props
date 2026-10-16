@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Version>1.2.0</Version>
+    <Company>All-Stars Mod Manager contributors</Company>
+    <Product>All-Stars Mod Manager</Product>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Build output must not depend on where the source folder is: the compiler embeds source paths unless they are mapped. -->
+    <PathMap>$(MSBuildThisFileDirectory)=/_/src/</PathMap>
+  </PropertyGroup>
+</Project>

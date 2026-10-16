@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>AllStarsModManager.App</RootNamespace>
+    <AssemblyName>AllStarsModManager</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon></ApplicationIcon>
+    <Description>Mod manager for Sonic &amp; SEGA All-Stars Racing loader mods</Description>
+    <SourceHash Condition="'$(SourceHash)' == ''">unbound-dev-build</SourceHash>
+    <InformationalVersion>$(Version)+$(SourceHash)</InformationalVersion>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <ProjectReference Include="..\Core\AllStarsModManager.Core.csproj" />
+  </ItemGroup>
+</Project>

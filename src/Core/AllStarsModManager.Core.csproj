@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>AllStarsModManager</RootNamespace>
+    <AssemblyName>AllStarsModManager.Core</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The hash-keyed table of known loader builds (docs/PACKAGE-FORMAT.md, "Loader profiles"). -->
+    <EmbeddedResource Include="Game\loader-profiles.json" LogicalName="AllStarsModManager.loader-profiles.json" />
+  </ItemGroup>
+</Project>

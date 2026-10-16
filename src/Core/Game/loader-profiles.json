@@ -1,0 +1,60 @@
+{
+  "schema": "allstars-loader-profiles/1",
+  "profiles": [
+    {
+      "id": "ssasr-host-1",
+      "description": "ChaoGarage.dll mod host with the dinput8.dll bootstrap proxy, host interface version 1",
+      "host_sha256": "b66b5ab2b0ef5db82448d35f048be7ed56d626b463cf898187bdc98f61fe1952",
+      "proxy_sha256": "17a78e1eab0645c63b58ed7b90895787b62a79bbbb9413fb95c4ff54f931a6e2",
+      "host_abi": 1,
+      "mod_ini_schema": 1,
+      "plan_schema": 1,
+      "capabilities": [
+        "host-abi-1",
+        "bootstrap-abi-1",
+        "mod-ini-schema-1",
+        "plan-schema-1",
+        "plan-format-xpac",
+        "plan-format-file",
+        "plan-format-copy",
+        "plan-format-rtsc-merge",
+        "xpac-member-merge",
+        "startup-order-folder-name",
+        "startup-order-metal-sonic-first",
+        "runtime-init-before-game-crt",
+        "runtime-rollback-on-failed-init"
+      ],
+      "evidence": "Capability list derived by reading the host source (host.cpp sha256 e4d920ea964f179a72ec90dcfe5e412c31317b378188dfa22a056e995e28f2c6, resources.h 2d532f566ddf192a4b8cd9d23ca4c7bec039500f6b3f2a6562cf4e717a1901c5, virtual_xpac.h 7fc78cb949237449a88f1ba0ec1c47ecd7f626696360745706a9ca97b0d6e715, mod_api.h, bootstrap_api.h); the loader was not run to produce this list. Source linkage: in a separate verification both files of this pair were rebuilt from their retained source with the Microsoft C++ tools (MSVC 14.42.34433 x86, Windows SDK 10.0.22621.0) and matched the distributed files byte for byte except six bytes of embedded timestamps; the bootstrap proxy matched only when compiled in its original source-folder context. That ties each hash to source; it is not proof of behaviour in the game, and it does not cover the game executable."
+    },
+    {
+      "id": "chaogarage-1.1.0",
+      "description": "ChaoGarage 1.1.0: ChaoGarage.dll host and dinput8.dll bootstrap from the same release (host interface version 1, bootstrap interface 2)",
+      "host_sha256": "7370f5cc39f57e7996b653945747a124a2afabe4cc7df35835d55a028b75ec31",
+      "proxy_sha256": "5ec1aad557b0c724a86adc49b58859c8aaf43c78741f0385963930307d7e5fce",
+      "host_abi": 1,
+      "mod_ini_schema": 1,
+      "plan_schema": 1,
+      "capabilities": [
+        "host-abi-1",
+        "mod-ini-schema-1",
+        "plan-schema-1",
+        "plan-format-xpac",
+        "plan-format-file",
+        "plan-format-copy",
+        "plan-format-rtsc-merge",
+        "xpac-member-merge",
+        "startup-order-folder-name",
+        "startup-order-metal-sonic-first",
+        "runtime-init-before-game-crt",
+        "runtime-rollback-on-failed-init",
+        "bootstrap-abi-2",
+        "loader-info-export",
+        "startup-requirements-check",
+        "startup-load-order-check",
+        "startup-warning-dialog",
+        "rtsc-merge-16384-records"
+      ],
+      "evidence": "Released by the ChaoGarage project (https://github.com/Demaunix/ChaoGarage) and built reproducibly from its source tree 457c9f6fd0128e7c5031dc157699ab22e3039c1629f1b30241c1e3076bc29e5e with the Microsoft C++ tools (MSVC 14.42.34433 x86, Windows SDK 10.0.22621.0, /Brepro): the same source gives the same two files in any folder. The capability list is the host's own table (capabilities.h), which the host also reports through ChaoGarageGetLoaderInfo; the loader's tests check it against the shared vector file in synthetic stand-in processes. That ties the hashes to source and to tested behaviour outside the game; it is not proof of behaviour in the game, and it does not cover the game executable."
+    }
+  ]
+}
