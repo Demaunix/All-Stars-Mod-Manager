@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0
+
+**Understands ChaoGarage 1.2.0, where two mods may share an archive member.** Made for the Egg Hangar 1.2.0 release on GameBanana: with the current Steam Multiplayer, Metal Sonic and All-Stars Roster Pack mods installed, 1.2.0 of these tools reported "INCOMPATIBLE" although the game starts every mod.
+
+* New: the loader profile `chaogarage-1.2.0` (ChaoGarage 1.2.0, https://github.com/Demaunix/ChaoGarage/releases/tag/v1.2.0): both tools recognise that pair by its two SHA-256 values and know its capabilities, including the new `xpac-member-variants` and `xpac-member-optional`.
+* New: plan operations may carry `variants` (a version of the member made for another mod's exact content) and `optional` (gives way to another mod's change). The conflict check now combines such members exactly as the loader does: a fitting variant of either mod first; then an optional change gives way (the later mod's first, in folder-name order); otherwise the mods still cannot be used together. Two mods that each offer a different version made for the other's content are refused, and a third mod combines with a variant-made combination only through a variant made for that combined content. Combined members are listed in a note, like the loader's own log.
+* With ChaoGarage 1.1.0 or older the rule is unchanged (those loaders ignore the new fields). When the loader is not recognised, a pair only 1.2.0 can combine is reported as "could not be confirmed".
+* Plans are read as the 1.2.0 loader reads them: a wrong type in `optional` or `variants` makes the plan invalid, and every variant's file is checked like any other payload file, even when it would not be used.
+* Tests: one test for each way a shared member is resolved, run through the rules and through the checker; the shared loader test cases now come from ChaoGarage 1.2.0. Checked on a real game folder with ChaoGarage 1.2.0 and nine mods: the members the checker reports as combined are exactly the 41 the loader logged as combined at game start. Not tested: the manager's window (no window code changed).
+
 ## 1.2.0
 
 **Mods stay usable without the manager, and compatibility now has a documented, checkable format.**

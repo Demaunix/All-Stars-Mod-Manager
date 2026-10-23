@@ -77,12 +77,22 @@ The checker applies this subset with a port of the loader's parser (`StrictJson`
 
 | `format` | other required fields | meaning |
 |---|---|---|
-| `xpac` | `base_sha256`; `operations[]` of `{key, kind: "replace"\|"add", base_stored_sha256 (replace only), payload, payload_sha256, stored_size, entry_flags (optional, 0)}`; `expected_composed_sha256`, `expected_composed_size`, `expected_member_count` | change or add members of a game archive. `key` is a number or 8 hexadecimal digits. Several mods may change **different** members of the same archive. |
+| `xpac` | `base_sha256`; `operations[]` of `{key, kind: "replace"\|"add", base_stored_sha256 (replace only), payload, payload_sha256, stored_size, entry_flags (optional, 0)}`; `expected_composed_sha256`, `expected_composed_size`, `expected_member_count` | change or add members of a game archive. `key` is a number or 8 hexadecimal digits. Several mods may change **different** members of the same archive. From ChaoGarage 1.2.0 an operation may also carry `optional` (true/false) and `variants[]` of `{over_payload_sha256, payload, payload_sha256, stored_size, over_mod (optional, for readers)}`, so that two mods can share a member (section 3.1). |
 | `file` | `base_sha256`, `payload`, `payload_sha256` | replace a whole file; only one mod may do so, and not together with an `xpac` group on the same file |
 | `copy` | `payload`, `payload_sha256` | place a copy of a payload at the path |
 | `rtsc_merge` | `payload`, `payload_sha256`, `key_size` | shader-cache seed; each cache file belongs to one mod |
 
 `base_*` hashes pin the **original game files** the mod was made against; the loader refuses a mod whose base hash does not match the installed game file. Payload hashes are lowercase SHA-256. An unknown `format` is refused by the loader. These rules are mirrored by the tools and compared with the loader's own code in a private differential test (see the manager README, "Evidence").
+
+### 3.1 Sharing an archive member (ChaoGarage 1.2.0)
+
+Before 1.2.0 two mods that change the same member of one archive always stop every mod, even with identical data. ChaoGarage 1.2.0 (capabilities `xpac-member-variants` and `xpac-member-optional`) combines them when an operation says how; the loader's repository describes the fields for authors (`docs/MOD-AUTHORS.md`, "Sharing an archive member with another mod"). The tools apply the loader's own order (`merge_virtual_xpac` in its `virtual_xpac.h`):
+
+* Mods are combined one after another in folder-name order (here `metal-sonic` is **not** moved first). For each member both sides change: a **variant** of either side made for exactly the other side's content (its `over_payload_sha256` equals the other's `payload_sha256`) is used; if both sides offer one and they differ, the pair is refused. Otherwise the later mod's **optional** change gives way, else the earlier one's. Otherwise the pair is refused, as before.
+* A member combined through a variant counts as new content that is not optional and has no variants: a third mod combines with it only through a variant made for that combined content. When an optional change gave way, the remaining change keeps its own variants and `optional`.
+* A present `optional` that is not true/false, a variant that is not an object, an `over_payload_sha256` that is not 64 lowercase hexadecimal digits, or two variants for the same content make the plan invalid (as in the 1.2.0 loader). Every variant's payload is checked like any payload, even when it would not be used. Variants do not change `expected_composed_sha256` (the archive with the mod's own payloads on the original file).
+* Loaders before 1.2.0 ignore both fields. When the installed loader is recognised, the tools use its capabilities; when it is not (unrecognised build, no loader, no game folder), a pair that only 1.2.0 can combine is reported as *could not be confirmed* (`shared-archive-member-unconfirmed`), and a pair every loader refuses stays a definite problem. Combined members are listed in a note (`shared-member-combined`), like the loader's own log lines.
+* This rule follows the 1.2.0 loader's source and was compared with that loader's log on a real game folder; it is not part of the private differential test mentioned above.
 
 ## 4. The runtime DLL
 
@@ -252,7 +262,7 @@ Pre-releases follow plain precedence: `1.0.0-rc.1` does **not** satisfy `>=1.0.0
 | `mod.ini` fields, schema 1, lowercase pins, path rules, no links | **yes** (whole mod set is refused on failure) | yes | yes |
 | unique mod IDs | **yes** | yes | yes |
 | plan format, payload sizes and hashes, base hashes of game files | **yes** | yes | yes (hashes unless `--quick`) |
-| shared archive members, whole files, shader caches, different base archives | **yes** | yes | yes |
+| shared archive members, whole files, shader caches, different base archives | **yes** (from 1.2.0, members two mods share may be combined through `variants`/`optional`, section 3.1) | yes | yes |
 | runtime is an x86 DLL exporting `SsasrModInitialize` / `SsasrModRollback` | **yes** (when it loads the DLL) | static check | static check |
 | any failure above | **all mods are disabled for that launch** | blocks Apply | definite problem |
 | start order (folder name order, `metal-sonic` first) | **defines it** | shows it | shows it |
@@ -269,6 +279,8 @@ A **loader profile** is a record keyed by the SHA-256 pair of `ChaoGarage.dll` +
 Capabilities known for `ssasr-host-1` (derived by reading the host source, not by running it): `host-abi-1`, `bootstrap-abi-1`, `mod-ini-schema-1`, `plan-schema-1`, `plan-format-xpac`, `plan-format-file`, `plan-format-copy`, `plan-format-rtsc-merge`, `xpac-member-merge` (several mods change different members of one archive), `startup-order-folder-name`, `startup-order-metal-sonic-first`, `runtime-init-before-game-crt` (the runtime is initialised before the game's own startup, so no game function may be called yet), `runtime-rollback-on-failed-init`.
 
 Capabilities of `chaogarage-1.1.0` (the host's own table, also reported by its `ChaoGarageGetLoaderInfo` export): the thirteen above except `bootstrap-abi-1` (1.1.0's two files use bootstrap interface 2), plus `bootstrap-abi-2` (the two files check that they come from one release), `loader-info-export`, `startup-requirements-check` (the description's format, `must_understand` and `loader` block are enforced before any mod code is loaded), `startup-load-order-check`, `startup-warning-dialog` (refusals are explained in one message per start) and `rtsc-merge-16384-records` (shader caches with up to 16,384 records). A mod that wants players on an older loader to be stopped by these tools can require `startup-requirements-check`; the loader's own repository also shows how a mod's runtime can check the loader it runs under.
+
+Capabilities of `chaogarage-1.2.0`: those of `chaogarage-1.1.0` plus `xpac-member-variants` (an operation's `variants` are used) and `xpac-member-optional` (an operation marked `optional` gives way); see section 3.1. A mod that relies on them should require both, so that a 1.1.0 loader asks the player to update instead of reporting a conflict.
 
 ## 13. What this contract does not give you
 

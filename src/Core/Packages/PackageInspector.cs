@@ -286,8 +286,28 @@ public static class PackageInspector
                     if (op.Kind == "replace") op.BaseStoredSha = HashField(o, "base_stored_sha256");
                     else if (op.Kind != "add") throw new PlanFormatException($"unknown operation \"{PackageInfo.Clean(op.Kind, 20)}\"");
                     if (o.Has("name") && o.At("name").Kind == JKind.String) op.Name = PackageInfo.Clean(o.At("name").S, 120);
-                    Payload(o, $"member {op.Key:X8}", true);
+                    op.Payload = Payload(o, $"member {op.Key:X8}", true);
                     if (o.Has("entry_flags") && o.At("entry_flags").U32() != 0) throw new PlanFormatException("archive member flags are not supported");
+                    // ChaoGarage 1.2.0 fields (earlier loaders ignore them). As in the loader, a present field of the wrong type is refused, never read as absent,
+                    // and every variant's payload is checked like any other payload, even when it would not be used.
+                    if (o.Has("optional"))
+                    {
+                        var f = o.At("optional");
+                        if (f.Kind != JKind.Bool) throw new PlanFormatException($"archive member {op.Key:X8}: \"optional\" must be true or false");
+                        op.Optional = f.B;
+                    }
+                    if (o.Has("variants"))
+                    {
+                        var overs = new HashSet<string>(StringComparer.Ordinal);
+                        foreach (var v in o.At("variants").List())
+                        {
+                            if (v.Kind != JKind.Object) throw new PlanFormatException($"archive member {op.Key:X8}: each variant must be an object");
+                            var over = HashField(v, "over_payload_sha256");
+                            if (!overs.Add(over)) throw new PlanFormatException($"archive member {op.Key:X8}: two variants are made for the same content");
+                            var overMod = v.Has("over_mod") ? PackageInfo.Clean(v.At("over_mod").Str(), 60) : null;
+                            op.Variants.Add(new PlanVariant { OverSha = over, OverMod = overMod, Payload = Payload(v, $"member {op.Key:X8} variant", true) });
+                        }
+                    }
                     pg.Ops.Add(op);
                     pg.Keys.Add(op.Key);
                 }

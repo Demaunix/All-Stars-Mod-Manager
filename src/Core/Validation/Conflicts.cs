@@ -59,7 +59,8 @@ public sealed class ConflictReport
 /// <summary>
 /// Cross-mod rules. The first group mirrors, line for line in effect, what the installed loader does in discover()
 /// (host.cpp), prepare() (resources.h) and merge_virtual_xpac() (virtual_xpac.h): the same logical target may be shared
-/// only by archive groups with the same base hash and disjoint member keys. Everything else is declared metadata.
+/// only by archive groups with the same base hash and disjoint member keys, or, from ChaoGarage 1.2.0, members combined
+/// through an operation's "variants" or "optional". Everything else is declared metadata.
 /// </summary>
 public static class ConflictAnalyzer
 {
@@ -71,7 +72,7 @@ public static class ConflictAnalyzer
     {
         loader ??= LoaderEvidence.NotInspected;
         var rep = new ConflictReport();
-        LoaderRules(active, rep);
+        LoaderRules(active, loader, rep);
         DeclaredRules(active, rep);
         LoadOrderRules(active, rep);
         LoaderRequirementRules(active, loader, rep);
@@ -87,7 +88,7 @@ public static class ConflictAnalyzer
 
     // ---- rules the loader itself enforces ------------------------------------------------
 
-    static void LoaderRules(IReadOnlyList<Candidate> active, ConflictReport rep)
+    static void LoaderRules(IReadOnlyList<Candidate> active, LoaderEvidence loader, ConflictReport rep)
     {
         // IDs must be unique (exact comparison, as the loader's std::set<wstring>).
         foreach (var grp in active.Where(c => c.Id is not null).GroupBy(c => c.Id!, StringComparer.Ordinal).Where(g => g.Count() > 1))
@@ -117,13 +118,127 @@ public static class ConflictAnalyzer
                 list.Add((c, g));
             }
         }
+        var sharing = MemberSharing.For(loader);
         foreach (var (target, list) in claims.Where(kv => kv.Value.Count > 1))
+        {
             for (int i = 0; i < list.Count; i++)
                 for (int j = i + 1; j < list.Count; j++)
-                    Pair(list[i], list[j], rep);
+                    Pair(list[i], list[j], rep, sharing);
+            if (sharing.Any) SharedMembers(list, loader, sharing, rep);
+        }
     }
 
-    static void Pair((Candidate C, PlanGroup G) a, (Candidate C, PlanGroup G) b, ConflictReport rep)
+    /// <summary>What the loader does when two mods change the same archive member: ChaoGarage 1.2.0 capabilities xpac-member-variants and xpac-member-optional.</summary>
+    readonly record struct MemberSharing(bool Variants, bool Optional, bool Confirmed)
+    {
+        public bool Any => Variants || Optional;
+        /// <summary>From the loader's profile when it is known; otherwise both are assumed, and what only they allow is reported as "could not be confirmed".</summary>
+        public static MemberSharing For(LoaderEvidence loader) => loader.CanAnswerCapabilities && loader.Profile is { } p
+            ? new(p.Capabilities.Contains("xpac-member-variants", StringComparer.Ordinal), p.Capabilities.Contains("xpac-member-optional", StringComparer.Ordinal), true)
+            : new(true, true, false);
+    }
+
+    /// <summary>What one mod (or, after a variant combined two, the combination) put at a member, as the loader's VirtualChange.</summary>
+    sealed class MemberChange
+    {
+        public string Sha = "";
+        public bool Optional;
+        public List<PlanVariant> Variants = new();
+        public List<Candidate> Owners = new();
+    }
+
+    static string Shown(IReadOnlyCollection<uint> keys) => string.Join(", ", keys.Take(6).Select(k => k.ToString("X8"))) + (keys.Count > 6 ? $" and {keys.Count - 6} more" : "");
+    static string Items(int n) => n == 1 ? "item" : $"{n} items";
+    static string Names(IEnumerable<Candidate> owners) => string.Join(" + ", owners.Select(N));
+
+    /// <summary>
+    /// Members several mods change in one archive (same original), resolved as the loader's merge_virtual_xpac() does (virtual_xpac.h, 1.2.0): the mods'
+    /// archives are folded in folder-name order (host.cpp discover(), without moving metal-sonic first), and for each member both sides change:
+    /// a variant of either side made for exactly the other side's content (two different such variants: refused); else the right (later) side's
+    /// optional change gives way; else the left side's; else the pair is refused. A combination made through a variant carries no variants and is
+    /// not optional, so a third mod combines with it only through a variant made for the combined content.
+    /// </summary>
+    static void SharedMembers(List<(Candidate C, PlanGroup G)> list, LoaderEvidence loader, MemberSharing sharing, ConflictReport rep)
+    {
+        foreach (var byBase in list.Where(x => x.G.Format == "xpac").GroupBy(x => x.G.BaseSha, StringComparer.Ordinal))
+        {
+            var order = byBase.GroupBy(x => x.C.Key).Select(g => g.First()).OrderBy(x => x.C.FolderName, StringComparer.Ordinal).ToList();
+            if (order.Count < 2) continue;
+            string target = order[0].G.LogicalDisplay;
+
+            var state = new Dictionary<uint, MemberChange>();
+            var refused = new List<(List<Candidate> Left, Candidate Right, uint Key, bool TwoVersions)>();
+            var combined = new List<(string How, uint Key)>();
+            foreach (var (c, g) in order)
+                foreach (var op in g.Ops)
+                {
+                    var rc = new MemberChange { Sha = op.Payload.Sha, Optional = op.Optional, Variants = op.Variants, Owners = { c } };
+                    if (!state.TryGetValue(op.Key, out var lc)) { state[op.Key] = rc; continue; }
+                    var rv = sharing.Variants ? rc.Variants.FirstOrDefault(v => v.OverSha == lc.Sha) : null;
+                    var lv = sharing.Variants ? lc.Variants.FirstOrDefault(v => v.OverSha == rc.Sha) : null;
+                    if (rv is not null && lv is not null && rv.Payload.Sha != lv.Payload.Sha) refused.Add((lc.Owners, c, op.Key, true));
+                    else if (rv is not null || lv is not null)
+                    {
+                        var (maker, under) = rv is not null ? (rc.Owners, lc.Owners) : (lc.Owners, rc.Owners);
+                        combined.Add(($"{Names(maker)}'s version made for {Names(under)}'s change is used (both changes)", op.Key));
+                        state[op.Key] = new MemberChange { Sha = (rv ?? lv)!.Payload.Sha, Owners = lc.Owners.Concat(rc.Owners).ToList() };
+                    }
+                    else if (sharing.Optional && rc.Optional) combined.Add(($"{Names(rc.Owners)}'s optional change gives way; {Names(lc.Owners)}'s is used", op.Key));
+                    else if (sharing.Optional && lc.Optional)
+                    {
+                        combined.Add(($"{Names(lc.Owners)}'s optional change gives way; {Names(rc.Owners)}'s is used", op.Key));
+                        state[op.Key] = rc;
+                    }
+                    else refused.Add((lc.Owners, c, op.Key, false));     // the loader stops here; the left side is kept so later mods are still compared with it
+                }
+
+            foreach (var grp in refused.GroupBy(r => (Left: string.Join("\n", r.Left.Select(x => x.Key)), Right: r.Right.Key, r.TwoVersions)))
+            {
+                var first = grp.First();
+                var keys = grp.Select(r => r.Key).ToList();
+                var parties = first.Left.Select(x => x.Key).Append(first.Right.Key).Distinct().ToList();
+                string who = $"{Names(first.Left)} and {N(first.Right)}";
+                rep.Conflicts.Add(first.TwoVersions
+                    ? new Conflict { Kind = ConflictKind.SharedArchiveMember, LoaderEnforced = true, Parties = parties, Target = target, Code = "shared-archive-member-two-versions",
+                        Title = $"Both offer their own version of the same data in {target}",
+                        Explanation = $"{who} each bring a version of the same {Items(keys.Count)} inside {target} ({Shown(keys)}) made for the other's change, and the two versions differ. The loader does not guess between them: it starts the game with no mods." }
+                    : new Conflict { Kind = ConflictKind.SharedArchiveMember, LoaderEnforced = true, Parties = parties, Target = target,
+                        Title = $"Both change the same data in {target}",
+                        Explanation = $"{who} both replace or add the same {Items(keys.Count)} inside {target} ({Shown(keys)}), and neither says how to combine with the other: no version made for the other's exact content fits, and neither change is marked optional. The loader refuses this even when the replacement data is identical, and then starts the game with no mods. Mods that change different items in the same archive can be combined." });
+            }
+
+            if (sharing.Confirmed)
+            {
+                if (combined.Count > 0)
+                    rep.Notes.Add(new AdvisoryNote { Code = "shared-member-combined", Title = $"Shared data in {target} is combined", Parties = order.Select(x => x.C.Key).ToList(),
+                        Text = $"Several mods change the same items inside {target}, and their plans say how to combine them; the loader does this: " +
+                               string.Join("; ", combined.GroupBy(x => x.How).Select(h => $"{h.Key} for {Items(h.Count())} ({Shown(h.Select(x => x.Key).ToList())})")) + "." });
+                continue;
+            }
+            // Loader not confirmed: what only member sharing makes possible is reported as unconfirmed. Earlier loaders refuse every shared member.
+            var refusedKeys = refused.Select(r => r.Key).ToHashSet();
+            for (int i = 0; i < order.Count; i++)
+                for (int j = i + 1; j < order.Count; j++)
+                {
+                    var (a, b) = (order[i], order[j]);
+                    var keys = a.G.Keys.Intersect(b.G.Keys).Where(k => !refusedKeys.Contains(k)).ToList();
+                    if (keys.Count == 0) continue;
+                    string why = loader.Knowledge switch
+                    {
+                        LoaderKnowledge.Unrecognized => "the installed loader build is not one this program knows",
+                        LoaderKnowledge.Absent => "the loader files (ChaoGarage.dll and dinput8.dll) are not both present",
+                        _ => "no loader was inspected (give a game folder or choose a loader profile)"
+                    };
+                    rep.Conflicts.Add(new Conflict { Kind = ConflictKind.SharedArchiveMember, Certainty = Certainty.Unknown, Code = "shared-archive-member-unconfirmed",
+                        Severity = loader.Knowledge == LoaderKnowledge.Unrecognized ? Severity.Blocker : Severity.Warning,
+                        Parties = { a.C.Key, b.C.Key }, Target = target,
+                        Title = $"{a.C.Pkg.DisplayName} and {b.C.Pkg.DisplayName} share data in {target} only with ChaoGarage 1.2.0 or newer",
+                        Explanation = $"{N(a.C)} and {N(b.C)} both change the same {Items(keys.Count)} inside {target} ({Shown(keys)}). Their plans say how to combine them (a version made for the other's change, or a change marked optional), which ChaoGarage 1.2.0 and newer use; earlier loaders refuse the pair and start the game with no mods. Which loader you have cannot be confirmed: {why}." });
+                }
+        }
+    }
+
+    static void Pair((Candidate C, PlanGroup G) a, (Candidate C, PlanGroup G) b, ConflictReport rep, MemberSharing sharing)
     {
         if (a.C.Key == b.C.Key) return;
         var parties = new List<string> { a.C.Key, b.C.Key };
@@ -139,6 +254,7 @@ public static class ConflictAnalyzer
                     Explanation = $"{who} were each made for a different version of {target}. The loader can only combine changes made to the same original archive." });
                 return;
             }
+            if (sharing.Any) return;      // members both change: SharedMembers() resolves them as the loader does
             var shared = a.G.Keys.Intersect(b.G.Keys).ToList();
             if (shared.Count > 0)
             {

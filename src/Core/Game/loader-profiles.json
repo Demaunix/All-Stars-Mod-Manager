@@ -55,6 +55,38 @@
         "rtsc-merge-16384-records"
       ],
       "evidence": "Released by the ChaoGarage project (https://github.com/Demaunix/ChaoGarage) and built reproducibly from its source tree 457c9f6fd0128e7c5031dc157699ab22e3039c1629f1b30241c1e3076bc29e5e with the Microsoft C++ tools (MSVC 14.42.34433 x86, Windows SDK 10.0.22621.0, /Brepro): the same source gives the same two files in any folder. The capability list is the host's own table (capabilities.h), which the host also reports through ChaoGarageGetLoaderInfo; the loader's tests check it against the shared vector file in synthetic stand-in processes. That ties the hashes to source and to tested behaviour outside the game; it is not proof of behaviour in the game, and it does not cover the game executable."
+    },
+    {
+      "id": "chaogarage-1.2.0",
+      "description": "ChaoGarage 1.2.0: ChaoGarage.dll host and dinput8.dll bootstrap from the same release (host interface version 1, bootstrap interface 2); two mods may share an archive member through variants or optional",
+      "host_sha256": "65eae0250b60ba885752a6adffbef57cf9bf7977a34a9b17149cdec6803198dc",
+      "proxy_sha256": "dec4f5c988897d824415d42483e4ed34b141e3896b7254fdfdabf17998ae4ab8",
+      "host_abi": 1,
+      "mod_ini_schema": 1,
+      "plan_schema": 1,
+      "capabilities": [
+        "host-abi-1",
+        "mod-ini-schema-1",
+        "plan-schema-1",
+        "plan-format-xpac",
+        "plan-format-file",
+        "plan-format-copy",
+        "plan-format-rtsc-merge",
+        "xpac-member-merge",
+        "startup-order-folder-name",
+        "startup-order-metal-sonic-first",
+        "runtime-init-before-game-crt",
+        "runtime-rollback-on-failed-init",
+        "bootstrap-abi-2",
+        "loader-info-export",
+        "startup-requirements-check",
+        "startup-load-order-check",
+        "startup-warning-dialog",
+        "rtsc-merge-16384-records",
+        "xpac-member-variants",
+        "xpac-member-optional"
+      ],
+      "evidence": "Released by the ChaoGarage project (https://github.com/Demaunix/ChaoGarage, release v1.2.0; the two hashes are those in its SHA256SUMS.txt) and built reproducibly from its source tree 62eedc3cf33c4d72c24b0c6d3713681947e9a98fd08bb98c6c3de1186efb323f with the Microsoft C++ tools (MSVC 14.42.34433 x86, Windows SDK 10.0.22621.0, /Brepro). The capability list is the host's own table (capabilities.h at ChaoGarage commit 0df1bc0), which the host also reports through ChaoGarageGetLoaderInfo. How this program resolves an archive member two mods change follows the host's merge_virtual_xpac (virtual_xpac.h) at that commit. That ties the hashes to source and to tested behaviour outside the game; it is not proof of behaviour in the game, and it does not cover the game executable."
     }
   ]
 }

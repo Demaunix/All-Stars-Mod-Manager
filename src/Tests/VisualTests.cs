@@ -241,7 +241,7 @@ public static class VisualTests
             UiApp.Click(app.Need("TabManager"));
             UiApp.WaitFor(() => UiApp.Find(app.Window, "GameFolderBox") is not null, 10, "the manager settings page");
             T.Eq(f.Game, UiApp.Text(app.Need("GameFolderBox")), "the page shows the chosen game folder");
-            T.True(UiApp.Text(app.Need("AboutText")).Contains("1.2.0"), "about names the version: " + UiApp.Text(app.Need("AboutText")));
+            T.True(UiApp.Text(app.Need("AboutText")).Contains("1.3.0"), "about names the version: " + UiApp.Text(app.Need("AboutText")));
             T.True(UiApp.Text(app.Need("AboutText")).Contains("no update service"), "no fake update promise");
             shots.Add(app.Screenshot("27-manager-settings"));
             UiApp.Click(app.Need("TabMods"));

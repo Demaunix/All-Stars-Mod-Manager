@@ -20,7 +20,8 @@ public static class LoaderVerdict
         public HashSet<string> Classes = new();
     }
 
-    public static Result Evaluate(IReadOnlyList<Candidate> set)
+    /// <param name="loader">The loader build to judge against; without it, archive members two mods share are judged as ChaoGarage 1.2.0 combines them.</param>
+    public static Result Evaluate(IReadOnlyList<Candidate> set, LoaderEvidence? loader = null)
     {
         var r = new Result();
         foreach (var c in set)
@@ -29,7 +30,7 @@ public static class LoaderVerdict
             { r.Reasons.Add($"{c.Display}: {i.Message}"); r.Classes.Add("structure"); }
             if (c.Pkg.Manifest is null || c.Pkg.Manifest.State == ManifestState.NoManifest) { r.Reasons.Add($"{c.Display}: no manifest"); r.Classes.Add("structure"); }
         }
-        var rep = ConflictAnalyzer.Analyze(set);
+        var rep = ConflictAnalyzer.Analyze(set, loader);
         foreach (var k in rep.Conflicts.Where(c => c.LoaderEnforced))
         {
             r.Reasons.Add(k.Title);

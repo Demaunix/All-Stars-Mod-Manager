@@ -80,7 +80,7 @@ public static class PackageCheck
             Check(listed.Count == actual.Count && listed.All(kv => actual.TryGetValue(kv.Key, out var h) && h == kv.Value), "BUILD-INFO.json lists every shipped file with the right hash");
             Check(Sha256Hex(r.GetProperty("source_tree_sha256").GetString()), "BUILD-INFO.json names the source tree hash", r.GetProperty("source_tree_sha256").GetString());
             Check(r.GetProperty("core_library_sha256").GetString() == coreSha, "the recorded Core library hash is the shipped one", coreSha);
-            Check(r.GetProperty("version").GetString() == "1.2.0", "build info version", r.GetProperty("version").GetString());
+            Check(r.GetProperty("version").GetString() == "1.3.0", "build info version", r.GetProperty("version").GetString());
             report["source_tree_sha256"] = r.GetProperty("source_tree_sha256").GetString();
             report["dotnet_sdk"] = r.GetProperty("dotnet_sdk").GetString();
         }
@@ -115,7 +115,7 @@ public static class PackageCheck
         // ---- 4. the extracted checker, through its real entry point -----------------------------------------------------------------------
         var chk = Path.Combine(pkgRoot, "AllStarsModCheck.exe");
         var ver = FileVersionInfo.GetVersionInfo(chk);
-        Check((ver.ProductVersion ?? "").StartsWith("1.2.0+"), "the checker reports version 1.2.0", ver.ProductVersion);
+        Check((ver.ProductVersion ?? "").StartsWith("1.3.0+"), "the checker reports version 1.3.0", ver.ProductVersion);
         RunChecker(chk, pkgRoot, new CheckFn(Check), report);
 
         // ---- 5. the extracted manager, in fixture mode ---------------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ public static class PackageCheck
         var help = Exec(chk, pkgRoot, "--help");
         Check(help.Exit == 0 && help.Out.Contains("Usage:") && help.Out.Contains("never runs or loads a mod DLL"), "checker --help works and states what it does not do", $"exit {help.Exit}");
         var v = Exec(chk, pkgRoot, "--version");
-        Check(v.Exit == 0 && v.Out.StartsWith("AllStarsModCheck 1.2.0"), "checker --version", v.Out);
+        Check(v.Exit == 0 && v.Out.StartsWith("AllStarsModCheck 1.3.0"), "checker --version", v.Out);
         Check(Exec(chk, pkgRoot, "--list-loaders").Out.Contains("ssasr-host-1"), "checker --list-loaders prints the built-in table");
         Check(Exec(chk, pkgRoot, "--bogus").Exit == 64, "usage error exits 64");
         Check(Exec(chk, pkgRoot, Path.Combine(pkgRoot, "no-such-folder")).Exit == 3, "missing folder exits 3");
@@ -191,7 +191,7 @@ public static class PackageCheck
         Check(File.Exists(exe), "the extracted manager exists");
         var info = FileVersionInfo.GetVersionInfo(exe);
         report["exe_product_version"] = info.ProductVersion;
-        Check((info.ProductVersion ?? "").StartsWith("1.2.0+"), "the manager reports version 1.2.0", info.ProductVersion);
+        Check((info.ProductVersion ?? "").StartsWith("1.3.0+"), "the manager reports version 1.3.0", info.ProductVersion);
         var gameBefore = Process.GetProcesses().Where(p => p.ProcessName.StartsWith("Sonic", StringComparison.OrdinalIgnoreCase)).Select(p => p.Id).ToHashSet();
         var steamBefore = Process.GetProcesses().Where(p => p.ProcessName.StartsWith("steam", StringComparison.OrdinalIgnoreCase)).Select(p => p.Id).ToHashSet();
         var f = UiFixture.Build("pkgui");
@@ -204,7 +204,7 @@ public static class PackageCheck
             UiApp.Click(UiApp.Need(app.Window, "TabManager"));
             UiApp.WaitFor(() => UiApp.Find(app.Window, "AboutText") is not null, 10, "about text");
             var about = UiApp.Text(app.Need("AboutText"));
-            Check(about.Contains("1.2.0") && about.Contains("AllStarsModCheck.exe") && about.Contains("do not need this manager"), "the settings page says mods work without the manager and names the checker", about);
+            Check(about.Contains("1.3.0") && about.Contains("AllStarsModCheck.exe") && about.Contains("do not need this manager"), "the settings page says mods work without the manager and names the checker", about);
             Check(app.CloseCleanly() == 0, "the manager closes with exit code 0");
         }
         var gameAfter = Process.GetProcesses().Where(p => p.ProcessName.StartsWith("Sonic", StringComparison.OrdinalIgnoreCase)).Select(p => p.Id).ToHashSet();

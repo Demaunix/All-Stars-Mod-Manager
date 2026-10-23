@@ -27,7 +27,7 @@ public static class LoaderVectorTests
     public static void Register()
     {
         T.Area("compat-vectors");
-        T.Run("shared loader vectors: the checker's verdict for each single-mod case, and agreement with the ChaoGarage 1.1.0 loader's own outcome", () =>
+        T.Run("shared loader vectors: the checker's verdict for each single-mod case, and agreement with the ChaoGarage 1.2.0 loader's own outcome", () =>
         {
             var v = JsonDocument.Parse(File.ReadAllBytes(VectorPath)).RootElement;
             T.Eq("chaogarage-loader-vectors/1", v.GetProperty("schema").GetString(), "vector schema");

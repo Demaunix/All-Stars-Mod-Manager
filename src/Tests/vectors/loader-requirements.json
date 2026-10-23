@@ -1,9 +1,9 @@
 {
   "schema": "chaogarage-loader-vectors/1",
-  "about": "Shared cases for allstars-mod.json as read by the ChaoGarage 1.1.0 loader (native) and by AllStarsModCheck (managed). 'loader' is what the loader starts or refuses before any mod code is loaded; 'checker_exit' is AllStarsModCheck's exit code for the same single mod on a recognised loader with the capabilities below (0 declared compatible, 1 insufficient information, 2 definite problem). Placeholders: $HOST/$PROXY = the SHA-256 of the installed loader files, $HOST_UPPER = the same in capitals, $OTHER = another build. A case may set 'hex' instead of 'text' for exact bytes, or 'repeat' to build a large file.",
+  "about": "Shared cases for allstars-mod.json as read by the ChaoGarage 1.2.0 loader (native) and by AllStarsModCheck (managed). 'loader' is what the loader starts or refuses before any mod code is loaded; 'checker_exit' is AllStarsModCheck's exit code for the same single mod on a recognised loader with the capabilities below (0 declared compatible, 1 insufficient information, 2 definite problem). Placeholders: $HOST/$PROXY = the SHA-256 of the installed loader files, $HOST_UPPER = the same in capitals, $OTHER = another build. A case may set 'hex' instead of 'text' for exact bytes, or 'repeat' to build a large file.",
   "self": {
-    "release": "1.1.0", "host_abi": 1, "mod_ini_schema": 1, "plan_schema": 1,
-    "capabilities": ["host-abi-1", "mod-ini-schema-1", "plan-schema-1", "plan-format-xpac", "plan-format-file", "plan-format-copy", "plan-format-rtsc-merge", "xpac-member-merge", "startup-order-folder-name", "startup-order-metal-sonic-first", "runtime-init-before-game-crt", "runtime-rollback-on-failed-init", "bootstrap-abi-2", "loader-info-export", "startup-requirements-check", "startup-load-order-check", "startup-warning-dialog", "rtsc-merge-16384-records"],
+    "release": "1.2.0", "host_abi": 1, "mod_ini_schema": 1, "plan_schema": 1,
+    "capabilities": ["host-abi-1", "mod-ini-schema-1", "plan-schema-1", "plan-format-xpac", "plan-format-file", "plan-format-copy", "plan-format-rtsc-merge", "xpac-member-merge", "startup-order-folder-name", "startup-order-metal-sonic-first", "runtime-init-before-game-crt", "runtime-rollback-on-failed-init", "bootstrap-abi-2", "loader-info-export", "startup-requirements-check", "startup-load-order-check", "startup-warning-dialog", "rtsc-merge-16384-records", "xpac-member-variants", "xpac-member-optional"],
     "other_sha256": "0000000000000000000000000000000000000000000000000000000000000001"
   },
   "cases": [
@@ -47,6 +47,7 @@
     { "name": "mod_ini_schema 2", "text": "{\"loader\":{\"mod_ini_schema\":2}}", "loader": "refuse:needs-newer-loader", "checker_exit": 2 },
     { "name": "plan_schema 2", "text": "{\"loader\":{\"plan_schema\":2}}", "loader": "refuse:needs-newer-loader", "checker_exit": 2 },
     { "name": "capabilities this release provides", "text": "{\"loader\":{\"capabilities\":[\"xpac-member-merge\",\"startup-requirements-check\",\"rtsc-merge-16384-records\"]}}", "loader": "start", "checker_exit": 0 },
+    { "name": "capabilities new in 1.2.0", "text": "{\"loader\":{\"capabilities\":[\"xpac-member-variants\",\"xpac-member-optional\"]}}", "loader": "start", "checker_exit": 0 },
     { "name": "capability that only earlier loader builds provided", "text": "{\"loader\":{\"capabilities\":[\"bootstrap-abi-1\"]}}", "loader": "refuse:made-for-other-loader", "checker_exit": 2 },
     { "name": "capability as one string", "text": "{\"loader\":{\"capabilities\":\"xpac-member-merge\"}}", "loader": "start", "checker_exit": 0 },
     { "name": "capability with spaces around it", "text": "{\"loader\":{\"capabilities\":[\" xpac-member-merge \"]}}", "loader": "start", "checker_exit": 0 },

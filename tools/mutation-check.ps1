@@ -17,7 +17,16 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 # id, file (relative to src), find (exact text), replace, test filters to run
 $mutants = @(
   @{ id='M01-shared-rtsc-allowed'; file='Core\Validation\Conflicts.cs'; find='if (a.G.Format == "rtsc_merge" && b.G.Format == "rtsc_merge") {'; repl='if (a.G.Format == "rtsc_merge" && b.G.Format == "rtsc_merge") { return;'; filters=@('conflicts','loader-parity') },
-  @{ id='M02-identical-member-allowed'; file='Core\Validation\Conflicts.cs'; find='if (shared.Count > 0)'; repl='if (shared.Count > 0 && false)'; filters=@('conflicts','loader-parity') },
+  @{ id='M02-identical-member-allowed'; file='Core\Validation\Conflicts.cs'; find='if (shared.Count > 0)'; repl='if (shared.Count > 0 && false)'; filters=@('conflicts','loader-parity','member-sharing') },
+  @{ id='M02b-shared-member-fold-off'; file='Core\Validation\Conflicts.cs'; find='if (sharing.Any) SharedMembers(list, loader, sharing, rep);'; repl='/* mutant */'; filters=@('conflicts','member-sharing') },
+  @{ id='S01-variants-ignored'; file='Core\Validation\Conflicts.cs'; find='var rv = sharing.Variants ? rc.Variants.FirstOrDefault(v => v.OverSha == lc.Sha) : null;'; repl='PlanVariant? rv = null;'; filters=@('member-sharing') },
+  @{ id='S02-two-versions-accepted'; file='Core\Validation\Conflicts.cs'; find='if (rv is not null && lv is not null && rv.Payload.Sha != lv.Payload.Sha)'; repl='if (false)'; filters=@('member-sharing') },
+  @{ id='S03-earlier-optional-first'; file='Core\Validation\Conflicts.cs'; find='else if (sharing.Optional && rc.Optional) combined'; repl='else if (sharing.Optional && rc.Optional && !lc.Optional) combined'; filters=@('member-sharing') },
+  @{ id='S04-combination-keeps-old-content'; file='Core\Validation\Conflicts.cs'; find='Sha = (rv ?? lv)!.Payload.Sha,'; repl='Sha = lc.Sha,'; filters=@('member-sharing') },
+  @{ id='S05-unconfirmed-loader-trusted'; file='Core\Validation\Conflicts.cs'; find=': new(true, true, false);'; repl=': new(true, true, true);'; filters=@('member-sharing') },
+  @{ id='S06-folder-order-ignored'; file='Core\Validation\Conflicts.cs'; find='.OrderBy(x => x.C.FolderName, StringComparer.Ordinal).ToList();'; repl='.ToList();'; filters=@('member-sharing') },
+  @{ id='S07-optional-type-lenient'; file='Core\Packages\PackageInspector.cs'; find='if (f.Kind != JKind.Bool) throw'; repl='if (false) throw'; filters=@('member-sharing') },
+  @{ id='S08-variant-payload-unchecked'; file='Core\Packages\PackageInspector.cs'; find='Payload = Payload(v, $"member {op.Key:X8} variant", true) });'; repl='Payload = new PlanPayload { Sha = v.At("payload_sha256").Str(), FullPath = LoaderPath.Child(dir, v.At("payload").Str()) } });'; filters=@('member-sharing') },
   @{ id='M03-numeric-key-misnormalised'; file='Core\Packages\PackageInspector.cs'; find='if (j.Kind == JKind.Number) return j.U32();'; repl='if (j.Kind == JKind.Number) return j.U32() ^ 1u;'; filters=@('conflicts','loader-parity') },
   @{ id='M04-case-sensitive-targets'; file='Core\Packages\PackageInspector.cs'; find='pg.LogicalKey = LoaderPath.Fold(rel);'; repl='pg.LogicalKey = rel;'; filters=@('conflicts','loader-parity') },
   @{ id='M05-file-vs-archive-ignored'; file='Core\Validation\Conflicts.cs'; find='else if (ax != bx && (a.G.Format == "file" || b.G.Format == "file")) {'; repl='else if (ax != bx && (a.G.Format == "file" || b.G.Format == "file")) { return;'; filters=@('conflicts','loader-parity') },
@@ -166,7 +175,7 @@ $results = @()
 # control
 $ctl = Join-Path $root 'work\mut-control'
 Copy-Source $ctl
-$c = Build-And-Run $ctl 'mutctl' (@('conflicts','loader-parity','transactions','transaction-faults','import','formats','packages','compat') | Select-Object -Unique)
+$c = Build-And-Run $ctl 'mutctl' (@('conflicts','loader-parity','member-sharing','transactions','transaction-faults','import','formats','packages','compat') | Select-Object -Unique)
 Write-Host "control (unmutated): built=$($c.built) valid=$($c.valid) passed=$($c.passed) failed=$($c.failed) $($c.why)"
 $results += [pscustomobject]@{ id = 'CONTROL-unmutated'; outcome = 'CONTROL'; built = $c.built; valid = $c.valid; passed = $c.passed; failed = $c.failed; killed = $null; failing_tests = @(); note = $c.why }
 if (-not $c.built -or -not $c.valid -or $c.failed -ne 0 -or $c.passed -le 0) { throw "control copy does not pass cleanly (built=$($c.built) valid=$($c.valid) passed=$($c.passed) failed=$($c.failed) $($c.why)); mutation results would be meaningless" }

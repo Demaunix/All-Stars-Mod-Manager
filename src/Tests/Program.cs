@@ -48,6 +48,7 @@ public static partial class Program
         Console.WriteLine("== formats"); FormatTests.Register();
         Console.WriteLine("== packages"); PackageTests.Register();
         Console.WriteLine("== conflicts"); ConflictTests.Register();
+        Console.WriteLine("== shared archive members (ChaoGarage 1.2.0)"); MemberSharingTests.Register();
 #if PRIVATE_TESTS
         Console.WriteLine("== loader parity (private oracle)");
         if (File.Exists(OracleTests.OraclePath)) OracleTests.Register();

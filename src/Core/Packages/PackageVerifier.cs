@@ -263,12 +263,9 @@ public static class XpacComposer
     {
         var members = new SortedDictionary<uint, Src>();
         foreach (var m in idx.Members.Values) members[m.Key] = new Src(null, m.Offset, m.Stored);
-        int payloadIndex = 0;
+        // Each operation's own payload: variants do not change what the plan promises (expected_composed_sha256).
         foreach (var op in g.Ops)
-        {
-            var payload = g.Payloads[payloadIndex++];
-            members[op.Key] = new Src(payload.FullPath, 0, (uint)new FileInfo(payload.FullPath).Length);
-        }
+            members[op.Key] = new Src(op.Payload.FullPath, 0, (uint)new FileInfo(op.Payload.FullPath).Length);
         uint count = (uint)members.Count;
         uint dirEnd = (uint)Up(24UL + 20UL * count);
 

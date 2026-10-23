@@ -57,6 +57,19 @@ public sealed class PlanOp
     public string Kind = "";
     public string? BaseStoredSha;
     public string? Name;
+    public PlanPayload Payload = null!;
+    /// <summary>ChaoGarage 1.2.0 "optional": the change gives way when another mod changes the same member and no variant fits.</summary>
+    public bool Optional;
+    /// <summary>ChaoGarage 1.2.0 "variants": this mod's versions of the member, each made on top of another mod's exact content.</summary>
+    public List<PlanVariant> Variants = new();
+}
+
+public sealed class PlanVariant
+{
+    /// <summary>SHA-256 of the other mod's content for the member that this variant was made on top of.</summary>
+    public string OverSha = "";
+    public string? OverMod;
+    public PlanPayload Payload = null!;
 }
 
 public sealed class PlanGroup

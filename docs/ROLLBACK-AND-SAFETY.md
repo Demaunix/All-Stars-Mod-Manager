@@ -40,6 +40,10 @@ After a crash the next start shows **Restore previous state**. Recovery is idemp
 
 If you ever need to undo something without the manager: switched-on/off state is only a rename inside the mod folder; moved-aside content is under `mods\.allstars-manager\backups\<txn>\` with the same relative layout; `history\<txn>\journal.json` lists each step (`kind`, `from`, `path`, `undoPath`) in order.
 
+## Rolling back the manager itself (1.3.0 to 1.2.0)
+
+Version 1.3.0 changes only the compatibility rules (it knows ChaoGarage 1.2.0 and how that loader lets two mods share an archive member); the journal, backup, undo and storage code is unchanged. To go back, close the manager and run the 1.2.0 package; both read the same `data` folder and records. 1.2.0 does not recognise the ChaoGarage 1.2.0 loader files and reports mods that share an archive member as conflicting, even when that loader combines them.
+
 ## Rolling back the manager itself (1.2.0 to 1.1.0)
 
 Version 1.2.0 adds the compatibility checks, the checker program and the stable package format; it does not change the journal, backup, undo or storage code (`Transactions/*`, `Storage/*` and `Library/*` are byte-identical to 1.1.0 apart from one added argument in the planner that carries the loader profiles). To go back, close the manager and run the previous package instead. The `data` folder (settings, profiles, library) and the game folder's `mods\.allstars-manager` records are shared by both versions, so an interrupted change or **Undo last change** can be finished by either one. The optional `data\loader-profiles.json` is ignored by 1.1.0. The one visible difference is stricter checking: 1.2.0 refuses to switch on a mod whose description declares something it cannot confirm (see PACKAGE-FORMAT.md section 9); 1.1.0 ignored such declarations.

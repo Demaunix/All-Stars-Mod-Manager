@@ -128,7 +128,7 @@ and give your folder a name that sorts later (`Egg Hangar` sorts after `All-Star
 ## 7. Publishing
 
 * Zip the **folder** (so a player can unzip into `mods\`): `YourMod.zip` containing `My Mod\mod.ini`, … or a `mods\My Mod\…` tree if you also ship extra files.
-* **Do not put `ChaoGarage.dll` or `dinput8.dll` in your mod package.** The loader is a separate download that players install once (its releases page: https://github.com/Demaunix/ChaoGarage/releases); a mod package holds only its own folder under `mods\` (plus the extra files its description lists). Link the loader's download page from your mod's page (ready-made requirements text: the loader repository's `docs/MOD-AUTHORS.md`) and say which loader build(s) you tested with; say what you did and did not test in the game. If your mod needs ChaoGarage 1.1.0 or later, require `startup-requirements-check` in your `loader` block: the 1.1.0 loader, the manager and the checker then agree, and the loader repository's `examples/mod-runtime-check` shows how your runtime can also stop with a clear message under an older loader.
+* **Do not put `ChaoGarage.dll` or `dinput8.dll` in your mod package.** The loader is a separate download that players install once (its releases page: https://github.com/Demaunix/ChaoGarage/releases); a mod package holds only its own folder under `mods\` (plus the extra files its description lists). Link the loader's download page from your mod's page (ready-made requirements text: the loader repository's `docs/MOD-AUTHORS.md`) and say which loader build(s) you tested with; say what you did and did not test in the game. If your mod changes an archive member that another mod also changes, ChaoGarage 1.2.0 can combine the two when your plan says how (`variants` made for the other mod's exact content, or `optional`; see `docs/PACKAGE-FORMAT.md` section 3.1 and the loader's `docs/MOD-AUTHORS.md`); then require `xpac-member-variants` and/or `xpac-member-optional`, and check the pair with `--add` on a game folder that has the other mod. If your mod needs ChaoGarage 1.1.0 or later, require `startup-requirements-check` in your `loader` block: the 1.1.0 loader, the manager and the checker then agree, and the loader repository's `examples/mod-runtime-check` shows how your runtime can also stop with a clear message under an older loader.
 * Ordinary download-and-replace updates are fine: the manager adds a new version by hand (`Add mod…`), the old one can stay installed (switched off) and a player can go back.
 * Do not put game files in your package unless you have the right to. The tools never need them: plans pin **hashes** of the original files, not the files.
 * Never tell players to delete your description file to get past a warning; fix the file instead. Players who do not want the tools can still copy your folder by hand.
@@ -136,6 +136,7 @@ and give your folder a name that sorts later (`Egg Hangar` sorts after `All-Star
 ## 8. Check before you publish
 
 ```
+AllStarsModCheck "path\to\My Mod" --loader chaogarage-1.2.0
 AllStarsModCheck "path\to\My Mod" --loader chaogarage-1.1.0
 AllStarsModCheck "path\to\My Mod" --loader ssasr-host-1
 AllStarsModCheck "path\to\game folder" --add "path\to\My Mod"

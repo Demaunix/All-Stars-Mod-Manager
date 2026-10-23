@@ -225,12 +225,19 @@ public static class CompatRuleTests
             var v10 = LoaderProfiles.Find("ssasr-host-1")!;
             T.True(v10.Capabilities.Contains("xpac-member-merge") && v10.Capabilities.Contains("bootstrap-abi-1") && v10.HostAbi == 1, "built-in capabilities (1.0)");
             T.True(LoaderProfiles.BuiltIn.All(p => p.Evidence.Contains("not proof of behaviour in the game")), "every built-in evidence text states its limit");
-            // ChaoGarage 1.1.0: its capability list is the loader's own table, as listed in the shared vector file; it no longer provides bootstrap-abi-1
+            // ChaoGarage 1.2.0: its capability list is the loader's own table, as listed in the shared vector file (taken from that release); 1.1.0 is the same
+            // table without the two 1.2.0 names. Neither provides bootstrap-abi-1.
             var v11 = LoaderProfiles.Find("chaogarage-1.1.0")!;
-            var vectorCaps = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(Path.Combine(Program.ModuleRoot, "src", "Tests", "vectors", "loader-requirements.json"))).RootElement
-                .GetProperty("self").GetProperty("capabilities").EnumerateArray().Select(c => c.GetString()!).ToList();
-            T.True(v11.HostAbi == 1 && v11.ModIniSchema == 1 && v11.PlanSchema == 1 && v11.Capabilities.SequenceEqual(vectorCaps) && !v11.Capabilities.Contains("bootstrap-abi-1"), "built-in 1.1.0 profile matches the loader's capability table");
+            var v12 = LoaderProfiles.Find("chaogarage-1.2.0")!;
+            var self = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(Path.Combine(Program.ModuleRoot, "src", "Tests", "vectors", "loader-requirements.json"))).RootElement.GetProperty("self");
+            var vectorCaps = self.GetProperty("capabilities").EnumerateArray().Select(c => c.GetString()!).ToList();
+            T.Eq("1.2.0", self.GetProperty("release").GetString(), "the vector file is the 1.2.0 loader's");
+            T.True(v12.HostAbi == 1 && v12.ModIniSchema == 1 && v12.PlanSchema == 1 && v12.Capabilities.SequenceEqual(vectorCaps) && !v12.Capabilities.Contains("bootstrap-abi-1"), "built-in 1.2.0 profile matches the loader's capability table");
+            T.True(v11.HostAbi == 1 && v11.ModIniSchema == 1 && v11.PlanSchema == 1 && v11.Capabilities.SequenceEqual(vectorCaps.Where(c => c is not ("xpac-member-variants" or "xpac-member-optional"))) && !v11.Capabilities.Contains("bootstrap-abi-1"), "built-in 1.1.0 profile is that table without the two 1.2.0 capabilities");
+            T.Eq("65eae0250b60ba885752a6adffbef57cf9bf7977a34a9b17149cdec6803198dc", v12.HostSha256, "1.2.0 host hash (release SHA256SUMS.txt)");
+            T.Eq("dec4f5c988897d824415d42483e4ed34b141e3896b7254fdfdabf17998ae4ab8", v12.ProxySha256, "1.2.0 proxy hash (release SHA256SUMS.txt)");
             T.True(LoaderProfiles.Match(v11.HostSha256, v11.ProxySha256)?.Id == "chaogarage-1.1.0" && LoaderProfiles.Match(v11.HostSha256, v10.ProxySha256) is null && LoaderProfiles.Match(v10.HostSha256, v11.ProxySha256) is null, "a mixed 1.0/1.1 pair is not recognised");
+            T.True(LoaderProfiles.Match(v12.HostSha256, v12.ProxySha256)?.Id == "chaogarage-1.2.0" && LoaderProfiles.Match(v12.HostSha256, v11.ProxySha256) is null && LoaderProfiles.Match(v11.HostSha256, v12.ProxySha256) is null, "a mixed 1.1/1.2 pair is not recognised");
             string Tbl(string profiles, string schema = "allstars-loader-profiles/1") => "{\"schema\":\"" + schema + "\",\"profiles\":[" + profiles + "]}";
             string One(string id = "p1", string h = null!, string pr = null!, string abi = "1", string caps = "[\"a\"]") => "{\"id\":\"" + id + "\",\"host_sha256\":\"" + (h ?? host) + "\",\"proxy_sha256\":\"" + (pr ?? proxy) + "\",\"host_abi\":" + abi + ",\"capabilities\":" + caps + "}";
             List<string> Problems(string json, out List<LoaderProfile> list) { var pr = new List<string>(); list = LoaderProfiles.Parse(Encoding.UTF8.GetBytes(json), true, pr); return pr; }

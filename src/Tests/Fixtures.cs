@@ -41,6 +41,10 @@ public sealed class OpSpec
     public KeyStyle Style = KeyStyle.Hex;
     public bool CorruptPayloadHash;
     public bool NullBaseHash;
+    // ChaoGarage 1.2.0 fields: "optional", and "variants" made over another mod's payload (by its bytes); RawExtra is written into the operation as is.
+    public bool? Optional;
+    public List<(byte[] Over, byte[] Data)> Variants = new();
+    public string RawExtra = "";
 }
 
 public sealed class GroupSpec
@@ -176,7 +180,12 @@ public sealed class Fx : IDisposable
                     else sb.Append(",\"base_stored_sha256\":null");
                     var ph = Sha.OfBytes(o.Payload);
                     if (o.CorruptPayloadHash) ph = Sha.OfBytes(Encoding.ASCII.GetBytes("corrupt"));
-                    sb.Append(",\"payload\":").Append(P(payRel)).Append(",\"payload_sha256\":\"").Append(H(ph)).Append("\",\"stored_size\":").Append(o.Payload.Length).Append(",\"entry_flags\":0}");
+                    sb.Append(",\"payload\":").Append(P(payRel)).Append(",\"payload_sha256\":\"").Append(H(ph)).Append("\",\"stored_size\":").Append(o.Payload.Length).Append(",\"entry_flags\":0");
+                    if (o.Optional is { } opt) sb.Append(",\"optional\":").Append(opt ? "true" : "false");
+                    if (o.Variants.Count > 0)
+                        sb.Append(",\"variants\":[").Append(string.Join(",", o.Variants.Select(v => "{\"over_mod\":\"other\",\"over_payload_sha256\":\"" + Sha.OfBytes(v.Over) + "\",\"payload\":" + P(Payload(v.Data, $"v{o.Key:X8}")) +
+                            ",\"payload_sha256\":\"" + Sha.OfBytes(v.Data) + "\",\"stored_size\":" + v.Data.Length + "}"))).Append(']');
+                    sb.Append(o.RawExtra).Append('}');
                     composed[o.Key] = o.Payload;
                 }
                 sb.Append(']');
